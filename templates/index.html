@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anonimizador de Currículos IA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Estilo para o spinner de carregamento */
+        .spinner {
+            border-top-color: #3498db; /* Cor do spinner (azul) */
+            animation: spin 1s linear infinite; /* Animação de rotação */
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <div class="min-h-screen flex flex-col items-center justify-center p-4">
+        
+        <div class="w-full max-w-3xl mx-auto">
+            
+            <header class="text-center mb-8">
+                <h1 class="text-3xl md:text-4xl font-bold text-slate-900">Anonimizador de Currículos com IA</h1>
+                <p class="mt-2 text-lg text-slate-600">Promova uma seleção justa e sem vieses.</p>
+            </header>
+
+            <div class="bg-white rounded-2xl shadow-xl p-6 md:p-10 border border-slate-200">
+
+                <form id="upload-form" action="/" method="post" enctype="multipart/form-data">
+                    <label for="file-upload" class="relative cursor-pointer bg-white rounded-lg border-2 border-dashed border-slate-300 flex flex-col items-center justify-center p-8 hover:border-blue-500 hover:bg-slate-50 transition-colors">
+                        <div class="text-center">
+                            <svg class="mx-auto h-12 w-12 text-slate-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                                <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <p class="mt-4 text-sm text-slate-600">
+                                <span class="font-semibold text-blue-600">Clique para enviar</span> ou arraste e solte.
+                            </p>
+                            <p class="text-xs text-slate-500 mt-1">Permite múltiplos arquivos PDF.</p>
+                            <span id="file-name" class="mt-3 text-sm font-medium text-slate-800">Nenhum arquivo selecionado</span>
+                        </div>
+                        <input id="file-upload" name="files[]" type="file" class="sr-only" accept=".pdf" multiple>
+                    </label>
+
+                    <div class="mt-6 flex justify-center">
+                        <button id="submit-btn" type="submit" class="w-full md:w-auto flex items-center justify-center gap-3 bg-blue-600 text-white font-semibold py-3 px-8 rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all disabled:bg-slate-400 disabled:cursor-not-allowed">
+                            <svg id="spinner" class="h-5 w-5 text-white hidden" viewBox="0 0 24 24" style="animation: spin 1s linear infinite;">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <span id="button-text">Anonimizar Currículos</span>
+                        </button>
+                    </div>
+                </form>
+
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        <div class="mt-4">
+                            {% for category, message in messages %}
+                                <div class="px-4 py-3 rounded-lg mt-2 
+                                    {% if category == 'error' %}bg-red-100 border border-red-400 text-red-700{% elif category == 'success' %}bg-green-100 border border-green-400 text-green-700{% else %}bg-blue-100 border border-blue-400 text-blue-700{% endif %}" role="alert">
+                                    <strong class="font-bold">
+                                        {% if category == 'error' %}Ops!{% elif category == 'success' %}Sucesso!{% else %}Informação:{% endif %}
+                                    </strong>
+                                    <span class="block sm:inline">{{ message }}</span>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endwith %}
+
+                {% if show_download_zip %}
+                <div class="mt-8 text-center" id="download-section">
+                    <p class="text-lg text-slate-700 mb-4">Seus currículos foram processados com sucesso!</p>
+                    <a href="{{ url_for('download_all_curriculos') }}" class="inline-block bg-green-600 text-white font-semibold py-3 px-8 rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all">
+                        Baixar Todos os Currículos Anonimizados (.zip)
+                    </a>
+                    <p class="mt-4 text-sm text-slate-600">Um arquivo ZIP contendo as pastas "arquivos_originais_renomeados" e "arquivos_anonimos" será baixado.</p>
+                </div>
+                {% endif %}
+
+                <div class="info-box bg-slate-100 border border-slate-200 rounded-lg p-4 mt-8">
+                    <h3 class="font-bold text-slate-800 text-lg mb-2">Como funciona:</h3>
+                    <ul class="list-disc list-inside text-slate-700 space-y-1">
+                        <li>Envie um ou mais arquivos PDF de currículos.</li>
+                        <li>Nossa IA removerá automaticamente informações como nome, telefone, endereço, e-mail, links pessoais, nomes de empresas e instituições de ensino.</li>
+                        <li>Após o processamento, um botão para **baixar um arquivo ZIP** completo aparecerá aqui.</li>
+                        <li>O ZIP conterá duas pastas:
+                            <ul class="list-disc list-inside ml-4 text-slate-600">
+                                <li><code class="bg-slate-200 p-1 rounded">arquivos_originais_renomeados/</code> (com os currículos originais, renomeados como Candidato_X_original.pdf)</li>
+                                <li><code class="bg-slate-200 p-1 rounded">arquivos_anonimos/</code> (com as versões anonimizadas, renomeadas como Candidato_X_anonimo.pdf)</li>
+                            </ul>
+                        </li>
+                        <li><strong class="text-red-600">Atenção:</strong> A cada novo upload, os arquivos processados anteriormente serão removidos para garantir a privacidade e evitar acúmulo de dados.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const uploadForm = document.getElementById('upload-form');
+        const fileInput = document.getElementById('file-upload');
+        const fileNameSpan = document.getElementById('file-name');
+        const submitBtn = document.getElementById('submit-btn');
+        const spinner = document.getElementById('spinner');
+        const buttonText = document.getElementById('button-text');
+        const downloadSection = document.getElementById('download-section'); // Seleciona a seção de download
+
+        // Atualiza o nome do arquivo selecionado e habilita/desabilita o botão
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length > 0) {
+                if (fileInput.files.length === 1) {
+                    fileNameSpan.textContent = fileInput.files[0].name;
+                } else {
+                    fileNameSpan.textContent = `${fileInput.files.length} arquivos selecionados`;
+                }
+                submitBtn.disabled = false; // Habilita o botão se arquivos forem selecionados
+            } else {
+                fileNameSpan.textContent = 'Nenhum arquivo selecionado';
+                submitBtn.disabled = true; // Desabilita o botão se nenhum arquivo for selecionado
+            }
+        });
+
+        // Desabilita o botão inicialmente se nenhum arquivo estiver selecionado ao carregar a página
+        if (fileInput.files.length === 0) {
+            submitBtn.disabled = true;
+        }
+
+        // Lida com a submissão do formulário
+        uploadForm.addEventListener('submit', function(event) {
+            // Validação no lado do cliente para garantir que um arquivo foi selecionado
+            if (fileInput.files.length === 0) {
+                event.preventDefault(); // Impede o envio do formulário
+                alert("Por favor, selecione um ou mais arquivos PDF antes de continuar.");
+                return; 
+            }
+            
+            // Desabilita o botão e mostra o spinner para indicar processamento
+            submitBtn.disabled = true;
+            spinner.classList.remove('hidden');
+            buttonText.textContent = 'Processando...';
+
+            // Oculta mensagens flash anteriores e a seção de download ao iniciar um novo upload
+            const flashMessagesDiv = document.querySelector('.mt-4');
+            if (flashMessagesDiv) {
+                flashMessagesDiv.innerHTML = ''; // Limpa o conteúdo das mensagens flash
+            }
+            if (downloadSection) {
+                downloadSection.classList.add('hidden'); // Oculta a seção de download
+            }
+        });
+
+        // Adiciona um listener para a página ser recarregada ao voltar (histórico do navegador)
+        // Isso garante que o estado do formulário e das mensagens seja atualizado corretamente
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted) {
+                // Se a página foi restaurada do cache "bfcache" do navegador
+                // Simula um reset para garantir que o formulário esteja limpo
+                fileInput.value = ''; // Limpa a seleção de arquivos
+                fileNameSpan.textContent = 'Nenhum arquivo selecionado';
+                submitBtn.disabled = true;
+                spinner.classList.add('hidden');
+                buttonText.textContent = 'Anonimizar Currículos';
+
+                const flashMessagesDiv = document.querySelector('.mt-4');
+                if (flashMessagesDiv) {
+                    flashMessagesDiv.innerHTML = '';
+                }
+                if (downloadSection) {
+                    downloadSection.classList.add('hidden');
+                }
+            }
+        });
+    </script>
+
+</body>
+</html>
