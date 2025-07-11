@@ -283,4 +283,4 @@ if __name__ == '__main__':
     threading.Timer(1.25, lambda: webbrowser.open(url)).start()
     
     # Inicia a aplicação Flask em modo de depuração (debug=True é bom para desenvolvimento)
-    app.run(host=host, port=port, debug=True)
+    app.run(host=host, port=port, debug=True)   
